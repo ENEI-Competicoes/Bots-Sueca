@@ -1,0 +1,58 @@
+services:
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./server/logs:/logs:delegated
+
+  bot_exemplo_1:
+    build:
+      context: ./c++_bot_template
+      dockerfile: Dockerfile
+    ports:
+      - "5001:5001"
+    depends_on:
+      - server
+    volumes:
+      - ./c++_bot_template/logs:/logs:delegated
+
+  bot_exemplo_2:
+    build:
+      context: ./java_bot_template
+      dockerfile: Dockerfile
+    ports:
+      - "5002:5002"
+    depends_on:
+      - server
+    volumes:
+      - ./java_bot_template/logs:/logs:delegated
+
+
+  bot_exemplo_3:
+    build:
+      context: ./python_bot_template
+      dockerfile: Dockerfile
+    ports:
+      - "5003:5003"
+    depends_on:
+      - server
+    volumes:
+      - ./python_bot_template/logs:/logs:delegated
+
+  bot_exemplo_4:
+    build:
+      context: ./javascript_bot_template
+      dockerfile: Dockerfile
+    ports:
+      - "5004:5004"
+    depends_on:
+      - server
+    volumes:
+      - ./javascript_bot_template/logs:/logs:delegated
+      
+networks:
+  app-network:
+    driver: bridge

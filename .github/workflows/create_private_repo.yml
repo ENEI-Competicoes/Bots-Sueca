@@ -1,0 +1,54 @@
+name: Create Team Private Repository
+on:
+    issues:
+        types: [opened]
+
+jobs:
+  create-repo:
+    permissions:
+      issues: write
+      contents: read
+      packages: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Initial Comment on Issue
+        run: gh issue comment "$NUMBER" --body "$BODY"
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+          GH_REPO: ENEI-Competicoes/Bots-Sueca
+          NUMBER: ${{ github.event.issue.number }}
+          BODY: >
+            :hourglass: O teu repositório privado está a ser criado... Aguarda um momento e não feches esta página.
+
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Sanitize Issue Title for Repo Name
+        env:
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+        run: |
+          # Convert issue title to a safe repo name (lowercase, dashes, alphanumeric)
+          SAFE_REPO_NAME=$(echo "$ISSUE_TITLE" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd 'a-z0-9-')
+          echo "SAFE_REPO_NAME=$SAFE_REPO_NAME" >> $GITHUB_ENV
+
+      - name: Create Private Repository
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+          ORG_NAME: ENEI-Competicoes
+          TEMPLATE_REPO: Bots-Sueca
+          ISSUE_CREATOR: ${{ github.event.issue.user.login }}
+        run: |
+          gh repo create "$ORG_NAME/$SAFE_REPO_NAME" --private --template "$ORG_NAME/$TEMPLATE_REPO"
+          gh api -X PUT "/repos/$ORG_NAME/$SAFE_REPO_NAME/collaborators/$ISSUE_CREATOR" -F permission=admin
+
+      - name: Final Comment on Issue
+        run: |
+          BODY=":white_check_mark: O teu repositório privado foi criado com sucesso!
+
+          Para acederes, clica [aqui](https://github.com/ENEI-Competicoes/$SAFE_REPO_NAME)."
+
+          gh issue close "$NUMBER" --comment "$BODY"
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+          GH_REPO: ENEI-Competicoes/Bots-Sueca
+          NUMBER: ${{ github.event.issue.number }}
